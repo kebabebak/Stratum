@@ -244,9 +244,12 @@ public class RoofIntegrityGrid(Map map) : MapComponent(map)
           // particular, SOS2 creates RoofShip directly instead of going through
           // a Stratum construction frame. Do not invent a default material (and
           // a refund for resources that may never have been paid) for those roofs.
-          if (stuff != null && ext != null && ext.buildableDef != null)
+          // A roof that is not made from stuff still refunds its costList. Hay thatch is that case.
+          if (ext != null && ext.buildableDef != null && (stuff != null || !ext.buildableDef.MadeFromStuff))
           {
-            var costList = ext.buildableDef.CostListAdjusted(stuff);
+            var costList = stuff != null
+              ? ext.buildableDef.CostListAdjusted(stuff)
+              : ext.buildableDef.costList;
             if (costList != null)
             {
               float refundFraction = ext.buildableDef.resourcesFractionWhenDeconstructed;

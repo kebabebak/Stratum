@@ -8,6 +8,7 @@ using SolarWeb.Stratum.Stats;
 using SolarWeb.Stratum.WorldComponents;
 using SolarWeb.Stratum.DefModExtensions;
 using SolarWeb.Stratum.Graphics;
+using SolarWeb.Stratum.Utilities;
 
 namespace SolarWeb.Stratum.UI;
 
@@ -119,6 +120,13 @@ public class SelectedRoof : ISelectable, IRenameable, ICancelableByDesignator
       action = delegate
       {
         if (def?.isThickRoof == true) return;
+
+        // God mode matches Designator_Deconstruct: refund now, leave no pawn job.
+        if (DebugSettings.godMode)
+        {
+          RoofBuildings.RemoveRoofImmediately(map, cell, refundMaterials: true);
+          return;
+        }
 
         map.areaManager.NoRoof[cell] = true;
       },
