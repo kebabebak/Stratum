@@ -5,6 +5,7 @@ using SolarWeb.Stratum.AI.Designators;
 using SolarWeb.Stratum.DefModExtensions;
 using SolarWeb.Stratum.Things;
 using SolarWeb.Stratum.UI;
+using SolarWeb.Stratum.Utilities;
 using Verse;
 
 namespace SolarWeb.Stratum.HSK;
@@ -48,7 +49,9 @@ public static class BuildableRoofPatch
     }
 
     var prerequisites = extension.buildableDef.researchPrerequisites;
-    if (prerequisites != null)
+    // Designator_Build.Visible returns true in god mode before IsResearchFinished, and DesignateSingleCell then places the thing.
+    // This prefix is the only research gate left on a roof cell, so god mode has to skip it or the visible button accepts nothing.
+    if (!DebugSettings.godMode && prerequisites != null)
     {
       foreach (var prerequisite in prerequisites)
       {
@@ -137,6 +140,12 @@ public static class BuildableRoofPatch
     command.disabledReason = null;
     command.action = delegate
     {
+      if (DebugSettings.godMode)
+      {
+        RoofBuildings.RemoveRoofImmediately(selectedRoof.map, selectedRoof.cell, refundMaterials: true);
+        return;
+      }
+
       selectedRoof.map.areaManager.NoRoof[selectedRoof.cell] = true;
     };
   }

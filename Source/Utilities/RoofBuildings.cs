@@ -13,6 +13,7 @@ public static class RoofBuildings
 {
   public static bool showRoofBuildings = false;
   public static bool isDeconstructingRoof = false;
+  public static bool isVanishingRoof = false;
 
   private static readonly System.Collections.Generic.Dictionary<ThingDef, RoofDef> buildableToRoof = new();
   private static readonly System.Collections.Generic.Dictionary<ThingDef, BuildableRoofExtension> buildableToExtension = new();
@@ -254,6 +255,30 @@ public static class RoofBuildings
     }
   }
 
+  /// <summary>
+  /// Clears one roof cell. The refund flag is the same one JobDriver_RemoveRoof sets around DoEffect, so the drop matches a pawn finishing that job.
+  /// Vanish skips the flag and destroys roof-attached buildings with DestroyMode.Vanish, leaving nothing on the ground.
+  /// </summary>
+  public static void RemoveRoofImmediately(Map map, IntVec3 cell, bool refundMaterials)
+  {
+    if (map?.roofGrid == null || !cell.InBounds(map) || map.roofGrid.RoofAt(cell) == null)
+      return;
+
+    bool previousRefund = isDeconstructingRoof;
+    bool previousVanish = isVanishingRoof;
+    try
+    {
+      isDeconstructingRoof = refundMaterials;
+      isVanishingRoof = !refundMaterials;
+      map.roofGrid.SetRoof(cell, null);
+    }
+    finally
+    {
+      isDeconstructingRoof = previousRefund;
+      isVanishingRoof = previousVanish;
+    }
+  }
+
   public static void HandleRoofLoss(Map map, IntVec3 cell)
   {
     if (map == null) return;
@@ -264,7 +289,11 @@ public static class RoofBuildings
       var thing = thingList[i];
       if (thing != null && thing.def != null && thing.def.HasModExtension<RoofBuilding>())
       {
-        if (isDeconstructingRoof)
+        if (isVanishingRoof)
+        {
+          thing.Destroy(DestroyMode.Vanish);
+        }
+        else if (isDeconstructingRoof)
         {
           if (thing.def.Minifiable)
           {
