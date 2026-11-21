@@ -52,6 +52,21 @@ public static class Skyfaller_Patch
     }
 
     CellRect cr = __instance.OccupiedRect();
+    // Vanilla HitRoof returns before DropRoofInCells when no occupied cell is roofed.
+    // This prefix runs first. BaseMaxHitPoints on the expanded rect would remove a buildable
+    // roof the skyfaller is not standing on, and RoofCollapserImmediate would crush that cell.
+    bool underRoof = false;
+    foreach (IntVec3 cell in cr.Cells)
+    {
+      if (cell.InBounds(map) && cell.Roofed(map))
+      {
+        underRoof = true;
+        break;
+      }
+    }
+
+    if (!underRoof) return true;
+
     CellRect cellRect = cr.ExpandedBy((!__instance.def.skyfaller.minimalRoofDestruction) ? 1 : 0).ClipInsideMap(map);
 
     bool anyBuildableRoof = false;
